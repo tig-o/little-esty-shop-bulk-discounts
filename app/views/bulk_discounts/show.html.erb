@@ -1,1 +1,6 @@
-<h1> Bulk Discount Show Page </h1>
+<h1> Bulk Discount '<%= @bulk_discount.discount %>% off at <%= @bulk_discount.threshold_amount %> items' Show Page </h1>
+
+<div id="discount-details">
+    <p>Discount Percent: <%= @bulk_discount.discount %>%</p>
+    <p>Item Amount Required: <%= @bulk_discount.threshold_amount %> items</p>
+</div>
