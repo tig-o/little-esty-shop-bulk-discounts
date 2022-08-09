@@ -67,4 +67,24 @@ RSpec.describe 'bulk discounts index' do
 
         expect(current_path).to eq("/merchants/#{pokemart.id}/bulk_discounts/#{pokemart_sale3.id}")
     end
+
+    it 'displays a link to create a new discount' do
+        pokemart = Merchant.create!(name: "PokeMart")
+        pokegarden = Merchant.create!(name: "PokeGarden")
+
+        pokemart_sale1 = BulkDiscount.create!(discount: 5, threshold_amount: 10, merchant: pokemart)
+        pokemart_sale2 = BulkDiscount.create!(discount: 10, threshold_amount: 15, merchant: pokemart)
+        pokemart_sale3 = BulkDiscount.create!(discount: 15, threshold_amount: 20, merchant: pokemart)
+        pokegarden_sale1 = BulkDiscount.create!(discount: 15, threshold_amount: 10, merchant: pokegarden)
+        pokegarden_sale2 = BulkDiscount.create!(discount: 25, threshold_amount: 20, merchant: pokegarden)
+        pokegarden_sale3 = BulkDiscount.create!(discount: 30, threshold_amount: 25, merchant: pokegarden)
+
+        visit merchant_bulk_discounts_path(pokemart.id)
+        
+        within "#create-bulk-discount" do
+            click_link "Create a New Bulk Discount"
+        end
+        
+        expect(current_path).to eq(new_merchant_bulk_discount_path(pokemart))
+    end
 end
