@@ -22,6 +22,7 @@ RSpec.describe 'Dashboard Page' do
       expect(page).to_not have_content('Treats and Things')
     end
   end
+
   it 'has a link to the merchants items page' do
     visit merchant_path(@merch1.id)
 
@@ -96,6 +97,7 @@ RSpec.describe 'Dashboard Page' do
         expect(page).to have_content(invoice_item2.invoice.formatted_date)
       end
     end
+
     it 'each invoice id is a link to that invoices show page' do
       customer1 = Customer.create!(first_name: 'Theophania', last_name: 'Fenwick')
       customer2 = Customer.create!(first_name: 'Vera', last_name: 'Wynn')
@@ -114,10 +116,12 @@ RSpec.describe 'Dashboard Page' do
       within "#invoice-item-#{invoice_item1.id}" do
         expect(page).to have_link("Invoice ##{invoice_item1.invoice.id}")
       end
+
       within "#invoice-item-#{invoice_item2.id}" do
         expect(page).to have_link("Invoice ##{invoice_item2.invoice.id}")
       end
     end
+
     it 'invoice id link takes you to the invoices#show page' do
       customer1 = Customer.create!(first_name: 'Theophania', last_name: 'Fenwick')
       customer2 = Customer.create!(first_name: 'Vera', last_name: 'Wynn')
@@ -139,6 +143,7 @@ RSpec.describe 'Dashboard Page' do
       end
 
       visit "/merchants/#{@merch2.id}"
+
       within "#invoice-item-#{invoice_item2.id}" do
         click_on("Invoice ##{invoice_item2.invoice.id}")
         expect(current_path).to eq("/merchants/#{@merch2.id}/invoices/#{invoice_item2.invoice.id}")
@@ -237,6 +242,19 @@ RSpec.describe 'Dashboard Page' do
       expect(page).to_not have_content(misty.first_name)
       expect(page).to_not have_content(giovanni.first_name)
     end
+  end
+
+  it 'displays link to view all the merchants bulk discounts' do
+    pokemart = Merchant.create!(name: "PokeMart")
+
+    visit merchant_path(pokemart.id)
+
+    within "#merchant-links" do
+      expect(page).to have_link("#{pokemart.name} Bulk Discounts")
+      click_on "PokeMart Bulk Discounts"
+    end
+    #'merchant show page/merchant id/bulk_discounts by specific merchant'
+    expect(current_path).to eq(merchant_bulk_discounts_path(pokemart.id)) 
   end
 end
 
