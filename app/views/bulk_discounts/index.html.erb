@@ -1,0 +1,7 @@
+<h1> Bulk Discounts Index</h1>
+
+<% @bulk_discounts.each do |bulk_discount| %>
+    <div id="bulk-discount<%= bulk_discount.id %>">
+        <p><%= bulk_discount.discount %>% off at <%= bulk_discount.threshold_amount %> items!</p>
+    </div>
+<% end %>
