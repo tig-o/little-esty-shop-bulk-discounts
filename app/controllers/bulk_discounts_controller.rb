@@ -1,7 +1,9 @@
+require './lib/holiday_calendar_search'
 class BulkDiscountsController < ApplicationController
     def index
         @merchant = Merchant.find(params[:merchant_id])
         @bulk_discounts = @merchant.bulk_discounts
+        @holiday_calendar_search = HolidayCalendarSearch.new
     end
 
     def show
