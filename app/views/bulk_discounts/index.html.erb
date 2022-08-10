@@ -13,3 +13,9 @@
 <div id="create-bulk-discount">
     <h3><%= link_to "Create a New Bulk Discount", new_merchant_bulk_discount_path(@merchant) %></h3>
 </div>
+
+<div id="holidays-upcoming"><h3>Upcoming Holidays</h3>
+        <% @holiday_calendar_search.holiday_info.each do |date| %>
+            <p><%= date[:name] %> on <%= date[:date] %></p>
+        <% end %>
+</div>
