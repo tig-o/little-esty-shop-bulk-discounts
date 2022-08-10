@@ -125,7 +125,7 @@ RSpec.describe 'merchant_invoices show page' do
 
       pokemart_sale1 = BulkDiscount.create!(discount: 10, threshold_amount: 10, merchant: pokemart)
       pokemart_sale2 = BulkDiscount.create!(discount: 15, threshold_amount: 20, merchant: pokemart)
-      pokemart_sale2 = BulkDiscount.create!(discount: 25, threshold_amount: 30, merchant: pokemart)
+      pokemart_sale3 = BulkDiscount.create!(discount: 25, threshold_amount: 30, merchant: pokemart)
 
       visit merchant_invoice_path(pokemart.id, invoice1.id)
 
@@ -136,5 +136,36 @@ RSpec.describe 'merchant_invoices show page' do
       within "#invoice-item-discounted-revenue" do
         expect(page).to have_content("Total Discounted Revenue: $677.0") # 30 dollars off item 1 + 63 dollars off item 2 = $93 discount off 770
       end
+  end
+
+  it 'displays applied discount link next to item and routes to that discounts show page' do
+      pokemart = Merchant.create!(name: "PokeMart")
+
+      red = Customer.create!(first_name: 'Red', last_name: 'Trainer')
+      item1 = pokemart.items.create!(name: 'Phoenix Feather Wand', description: 'Ergonomic grip', unit_price: 30)
+      item2 = pokemart.items.create!(name: 'Harmonica', description: 'Makes pretty noise', unit_price: 20)
+      item3 = pokemart.items.create!(name: 'Bag of Holding', description: 'This bag has an interior space considerably larger than its outside dimensions, roughly 2 feet in diameter at the mouth and 4 feet deep.', unit_price: 10)
+
+      invoice1 = red.invoices.create!(status: 1)
+
+      invoice_item1 = InvoiceItem.create!(invoice: invoice1, item: item1, quantity: 9, unit_price: 30, status: 1)
+      invoice_item2 = InvoiceItem.create!(invoice: invoice1, item: item2, quantity: 21, unit_price: 20, status: 1)
+      invoice_item3 = InvoiceItem.create!(invoice: invoice1, item: item3, quantity: 5, unit_price: 10, status: 1)
+
+      pokemart_sale1 = BulkDiscount.create!(discount: 10, threshold_amount: 10, merchant: pokemart)
+      pokemart_sale2 = BulkDiscount.create!(discount: 15, threshold_amount: 20, merchant: pokemart)
+
+      visit merchant_invoice_path(pokemart.id, invoice1.id)
+
+      within "#invoice-item#{invoice_item1.id}" do
+        expect(page).to have_content("No Discount Applied")
+      end
+      
+      within "#invoice-item#{invoice_item2.id}" do
+        expect(page).to have_link("Bulk Discount ##{pokemart_sale2.id}")
+        click_link "Bulk Discount ##{pokemart_sale2.id}"
+      end
+      
+      expect(current_path).to eq(merchant_bulk_discount_path(pokemart, pokemart_sale2))
   end
 end
