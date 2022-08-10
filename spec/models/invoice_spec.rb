@@ -6,6 +6,8 @@ RSpec.describe Invoice do
     it { should have_many :invoice_items }
     it { should have_many :transactions }
     it { should have_many(:items).through(:invoice_items) }
+    it { should have_many(:merchants).through(:items) }
+    it { should have_many(:bulk_discounts).through(:merchants) }
   end
 
   describe 'instance methods' do
@@ -98,6 +100,126 @@ RSpec.describe Invoice do
 
       expect(invoice1.total_revenue).to eq(42)
     end
+
+    it 'calculates #total_revenue of all items on invoice' do
+      merch1 = Merchant.create!(name: 'Needful Things Imports')
+
+      customer1 = Customer.create!(first_name: 'Bob', last_name: 'Schneider')
+      customer2 = Customer.create!(first_name: 'Veruca', last_name: 'Salt')
+
+      item1 = merch1.items.create!(name: 'Phoenix Feather Wand', description: 'Ergonomic grip', unit_price: 20)
+      item2 = merch1.items.create!(name: 'Harmonica', description: 'Makes pretty noise', unit_price: 6)
+      item3 = merch1.items.create!(name: 'Bag of Holding', description: 'This bag has an interior space considerably larger than its outside dimensions, roughly 2 feet in diameter at the mouth and 4 feet deep.', unit_price: 10)
+      item4 = merch1.items.create!(name: 'Ring of Resonance', description: 'A ring that resonates with the Ring of Flame Lord', unit_price: 15)
+      item5 = merch1.items.create!(name: 'Phreeoni Card', description: 'HIT + 100', unit_price: 20)
+
+      invoice1 = customer1.invoices.create!(status: 1)
+      invoice2 = customer2.invoices.create!(status: 1)
+
+      invoice_item1 = InvoiceItem.create!(invoice: invoice1, item: item1, quantity: 1, unit_price: 20, status: 1)
+      invoice_item1 = InvoiceItem.create!(invoice: invoice1, item: item2, quantity: 2, unit_price: 6, status: 1)
+      invoice_item1 = InvoiceItem.create!(invoice: invoice1, item: item3, quantity: 1, unit_price: 10, status: 1)
+      invoice_item2 = InvoiceItem.create!(invoice: invoice2, item: item4, quantity: 2, unit_price: 15, status: 1)
+      invoice_item2 = InvoiceItem.create!(invoice: invoice2, item: item5, quantity: 1, unit_price: 20, status: 1)
+
+      expect(invoice1.total_revenue).to eq(42)
+    end
+
+    it 'calculates #discount_amount of invoice' do
+      pokemart = Merchant.create!(name: "PokeMart")
+
+      red = Customer.create!(first_name: 'Red', last_name: 'Trainer')
+      item1 = pokemart.items.create!(name: 'Phoenix Feather Wand', description: 'Ergonomic grip', unit_price: 30)
+      invoice1 = red.invoices.create!(status: 1)
+      invoice_item1 = InvoiceItem.create!(invoice: invoice1, item: item1, quantity: 21, unit_price: 30, status: 1)
+
+      pokemart_sale1 = BulkDiscount.create!(discount: 10, threshold_amount: 10, merchant: pokemart)
+      pokemart_sale2 = BulkDiscount.create!(discount: 20, threshold_amount: 20, merchant: pokemart)
+      pokemart_sale3 = BulkDiscount.create!(discount: 30, threshold_amount: 30, merchant: pokemart)
+
+      expect(invoice1.discount_amount).to eq(126)
+    end  
+
+    it 'calculates #total_discount_revenue of invoice' do
+      pokemart = Merchant.create!(name: "PokeMart")
+
+      red = Customer.create!(first_name: 'Red', last_name: 'Trainer')
+      item1 = pokemart.items.create!(name: 'Phoenix Feather Wand', description: 'Ergonomic grip', unit_price: 30)
+      invoice1 = red.invoices.create!(status: 1)
+      invoice_item1 = InvoiceItem.create!(invoice: invoice1, item: item1, quantity: 21, unit_price: 30, status: 1)
+
+      pokemart_sale1 = BulkDiscount.create!(discount: 10, threshold_amount: 10, merchant: pokemart)
+      pokemart_sale2 = BulkDiscount.create!(discount: 20, threshold_amount: 20, merchant: pokemart)
+      pokemart_sale3 = BulkDiscount.create!(discount: 30, threshold_amount: 30, merchant: pokemart)
+
+      expect(invoice1.total_discount_revenue).to eq(504)
+    end  
+    
+    it 'calculates #total_discount_revenue of invoice' do
+      pokemart = Merchant.create!(name: "PokeMart")
+      
+      red = Customer.create!(first_name: 'Red', last_name: 'Trainer')
+      item1 = pokemart.items.create!(name: 'Phoenix Feather Wand', description: 'Ergonomic grip', unit_price: 30)
+      invoice1 = red.invoices.create!(status: 1)
+      invoice_item1 = InvoiceItem.create!(invoice: invoice1, item: item1, quantity: 21, unit_price: 30, status: 1)
+      
+      pokemart_sale1 = BulkDiscount.create!(discount: 10, threshold_amount: 10, merchant: pokemart)
+      pokemart_sale2 = BulkDiscount.create!(discount: 20, threshold_amount: 20, merchant: pokemart)
+      pokemart_sale3 = BulkDiscount.create!(discount: 30, threshold_amount: 30, merchant: pokemart)
+      
+      expect(invoice1.total_discount_revenue).to eq(504)
+    end  
+
+    it 'scenario: no discount is applied' do
+      pokemart = Merchant.create!(name: "PokeMart")
+    
+      red = Customer.create!(first_name: 'Red', last_name: 'Trainer')
+      item1 = pokemart.items.create!(name: 'Phoenix Feather Wand', description: 'Ergonomic grip', unit_price: 30)
+      item2 = pokemart.items.create!(name: 'Master Ball', description: 'Catches them all', unit_price: 20)
+      invoice1 = red.invoices.create!(status: 1)
+      invoice_item1 = InvoiceItem.create!(invoice: invoice1, item: item1, quantity: 5, unit_price: 30, status: 1)
+      invoice_item2 = InvoiceItem.create!(invoice: invoice1, item: item2, quantity: 5, unit_price: 20, status: 1)
+    
+      pokemart_sale1 = BulkDiscount.create!(discount: 20, threshold_amount: 10, merchant: pokemart)
+      
+      expect(invoice1.total_revenue).to eq(250)
+      expect(invoice1.discount_amount).to eq(0) # no discount for you!
+      expect(invoice1.total_discount_revenue).to eq(250) # no discounts means the total discount rev is the same as total rev
+    end 
+
+    it 'scenario: only first item is discounted' do
+      pokemart = Merchant.create!(name: "PokeMart")
+    
+      red = Customer.create!(first_name: 'Red', last_name: 'Trainer')
+      item1 = pokemart.items.create!(name: 'Phoenix Feather Wand', description: 'Ergonomic grip', unit_price: 30)
+      item2 = pokemart.items.create!(name: 'Master Ball', description: 'Catches them all', unit_price: 20)
+      invoice1 = red.invoices.create!(status: 1)
+      invoice_item1 = InvoiceItem.create!(invoice: invoice1, item: item1, quantity: 10, unit_price: 30, status: 1)
+      invoice_item2 = InvoiceItem.create!(invoice: invoice1, item: item2, quantity: 5, unit_price: 20, status: 1)
+    
+      pokemart_sale1 = BulkDiscount.create!(discount: 20, threshold_amount: 10, merchant: pokemart)
+      
+      expect(invoice1.total_revenue).to eq(400)
+      expect(invoice1.discount_amount).to eq(60) 
+      expect(invoice1.total_discount_revenue).to eq(340) 
+    end  
+
+    it 'scenario: two items discounted' do
+      pokemart = Merchant.create!(name: "PokeMart")
+    
+      red = Customer.create!(first_name: 'Red', last_name: 'Trainer')
+      item1 = pokemart.items.create!(name: 'Phoenix Feather Wand', description: 'Ergonomic grip', unit_price: 30)
+      item2 = pokemart.items.create!(name: 'Master Ball', description: 'Catches them all', unit_price: 20)
+      invoice1 = red.invoices.create!(status: 1)
+      invoice_item1 = InvoiceItem.create!(invoice: invoice1, item: item1, quantity: 12, unit_price: 30, status: 1)
+      invoice_item2 = InvoiceItem.create!(invoice: invoice1, item: item2, quantity: 15, unit_price: 20, status: 1)
+    
+      pokemart_sale1 = BulkDiscount.create!(discount: 20, threshold_amount: 10, merchant: pokemart)
+      pokemart_sale2 = BulkDiscount.create!(discount: 30, threshold_amount: 15, merchant: pokemart)
+      
+      expect(invoice1.total_revenue).to eq(660)
+      expect(invoice1.discount_amount).to eq(162) # 72 dollars off(20% off item 1) + 90 dollars off(30% off item 2)
+      expect(invoice1.total_discount_revenue).to eq(498) # total revenue made after discounts were applied
+    end  
   end
 end
-
