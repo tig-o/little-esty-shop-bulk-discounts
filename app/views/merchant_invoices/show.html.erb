@@ -9,10 +9,17 @@
 
 <div id="invoice-item-information">
     <% @invoice.invoice_items.each do |invoice_item|%>
+      <div id="invoice-item<%= invoice_item.id %>">
         <h3><%="Item Name: #{invoice_item.item.name}"%></h3>
         <p><%="Quantity Ordered: #{invoice_item.quantity}"%></p>
         <p><%="Price: #{number_to_currency(invoice_item.unit_price)}"%></p>
         <p><%="Status: #{invoice_item.status}"%></p>
+
+        <p><% if invoice_item.check_discount %>
+                <%= link_to "Bulk Discount ##{invoice_item.check_discount.id}", "/merchants/#{@merchant.id}/bulk_discounts/#{invoice_item.check_discount.id}" %>
+            <% else %>
+                <%= "No Discount Applied"  %>
+        <% end %></p>
 
         <%= form_with url: "/merchants/#{@merchant.id}/invoices/#{@invoice.id}", method: :patch, local: true do |form| %>
             <%= form.label :status %>
@@ -20,6 +27,7 @@
             <%= form.hidden_field :invoice_item_id, value: invoice_item.id  %>
             <%= form.submit "Update Item Status" %>
         <% end %>
+      </div>
     <% end %>
 </div>
 
