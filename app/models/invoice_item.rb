@@ -10,5 +10,9 @@ class InvoiceItem < ApplicationRecord
     quantity * unit_price
   end
 
-  
+  def check_discount
+    bulk_discounts.where("bulk_discounts.threshold_amount <= ?", quantity) #"#{quantity} >= bulk_discounts.threshold"
+    .order(discount: :desc)
+    .first
+  end
 end
