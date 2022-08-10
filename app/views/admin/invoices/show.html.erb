@@ -18,9 +18,12 @@
   </div>
 <% end %>
 
-  
 <div id="total-revenue">
-  <h3>Total Revenue: <%= @invoice.total_revenue %></h3>
+  <h3>Total Revenue: <%= number_to_currency(@invoice.total_revenue) %></h3>
+</div>
+
+<div id="total-discount-revenue">
+  <h3>Total Discounted Revenue: <%= number_to_currency(@invoice.total_discount_revenue) %></h3>
 </div>
 
 <div id="update-status">
