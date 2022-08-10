@@ -21,24 +21,20 @@ RSpec.describe 'admin invoices show page' do
     @invoice2.transactions.create!(credit_card_number: 3_395_123_433_951_234, result: 1)
 
     @pokegarden = Merchant.create!(name: 'PokeGarden')
-    @razz_berry = @pokegarden.items.create!(name: 'Razz Berry',
-                                            description: 'Feed this to a Pokémon, and it will be easier to catch on your next throw.', unit_price: 2)
-    @nanab_berry = @pokegarden.items.create!(name: 'Nanab Berry',
-                                             description: 'Feed this to a Pokémon to calm it down, making it less erratic.', unit_price: 5)
-    @pinap_berry = @pokegarden.items.create!(name: 'Pinap Berry',
-                                             description: 'Feed this to a Pokémon to make it drop more Candy.', unit_price: 8)
+    @razz_berry = @pokegarden.items.create!(name: 'Razz Berry', description: 'Feed this to a Pokémon, and it will be easier to catch on your next throw.', unit_price: 2)
+    @nanab_berry = @pokegarden.items.create!(name: 'Nanab Berry', description: 'Feed this to a Pokémon to calm it down, making it less erratic.', unit_price: 5)
+    @pinap_berry = @pokegarden.items.create!(name: 'Pinap Berry', description: 'Feed this to a Pokémon to make it drop more Candy.', unit_price: 8)
 
     @trainer_blue = Customer.create!(first_name: 'Blue', last_name: 'Trainer')
     @invoice3 = @trainer_blue.invoices.create!(status: 2)
     @invoice4 = @trainer_blue.invoices.create!(status: 2)
-    @invoice_item3 = InvoiceItem.create!(invoice: @invoice3, item: @razz_berry, quantity: 2, unit_price: 8,
-                                         status: 0)
-    @invoice_item4 = InvoiceItem.create!(invoice: @invoice4, item: @pinap_berry, quantity: 2, unit_price: 5,
-                                         status: 0)
+    @invoice_item3 = InvoiceItem.create!(invoice: @invoice3, item: @razz_berry, quantity: 2, unit_price: 8, status: 0)
+    @invoice_item4 = InvoiceItem.create!(invoice: @invoice4, item: @pinap_berry, quantity: 2, unit_price: 5, status: 0)
     @invoice3.transactions.create!(credit_card_number: 1_195_123_411_951_234, result: 1)
     @invoice3.transactions.create!(credit_card_number: 1_195_123_411_951_234, result: 1)
     @invoice4.transactions.create!(credit_card_number: 1_195_123_411_951_234, result: 1)
     @invoice4.transactions.create!(credit_card_number: 1_195_123_411_951_234, result: 1)
+    @pokemart_sale1 = @pokemart.bulk_discounts.create!(discount: 20, threshold_amount: 2)
   end
 
   it 'displays invoice attributes' do
@@ -74,20 +70,28 @@ RSpec.describe 'admin invoices show page' do
     visit "/admin/invoices/#{@invoice1.id}"
 
     within '#total-revenue' do
-      expect(page).to have_content('Total Revenue: 26')
+      expect(page).to have_content('Total Revenue: $26.00')
+    end
+  end
+  
+  it 'has a select field to update invoice status' do
+    visit "/admin/invoices/#{@invoice1.id}"
+    
+    within '#update-status' do
+      expect(page).to have_content('completed')
+      
+      select 'cancelled', from: 'Status'
+      click_on 'Update Status'
+      
+      expect(page).to have_content('cancelled')
     end
   end
 
-  it 'has a select field to update invoice status' do
+  it 'displays invoice total discounted revenue' do
     visit "/admin/invoices/#{@invoice1.id}"
 
-    within '#update-status' do
-      expect(page).to have_content('completed')
-
-      select 'cancelled', from: 'Status'
-      click_on 'Update Status'
-
-      expect(page).to have_content('cancelled')
+    within '#total-discount-revenue' do
+      expect(page).to have_content('Total Discounted Revenue: $21.00')
     end
   end
 end
